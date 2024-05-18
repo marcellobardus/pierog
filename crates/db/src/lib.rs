@@ -55,7 +55,10 @@ impl Db {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::io::Read;
+    use std::{
+        fs::File,
+        io::{Read, Write},
+    };
 
     #[test]
     fn test_db() {
