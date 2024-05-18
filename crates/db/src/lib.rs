@@ -1,10 +1,6 @@
 use anyhow::{bail, Result};
-use rusqlite::types::ToSql;
 use rusqlite::Connection;
-use std::{
-    fs::File,
-    io::{Read, Write},
-};
+use std::io::Read;
 use tempfile::NamedTempFile;
 
 pub struct Db {
