@@ -70,12 +70,10 @@ async fn upload_handler(Query(query_params): Query<QueryParams>) -> impl IntoRes
     .await
     .unwrap();
 
-    let program_hash_string = hex::encode(program_hash);
     let db = Db::new().unwrap();
-    db.set(&program_hash_string, &base64_decoded, "0.13.1")
-        .unwrap();
+    db.set(&program_hash, &base64_decoded, "0.13.1").unwrap();
 
-    (StatusCode::OK, program_hash_string)
+    (StatusCode::OK, program_hash)
 }
 
 async fn search_handler(
