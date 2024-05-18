@@ -65,20 +65,14 @@ async fn upload_handler(Query(query_params): Query<QueryParams>) -> impl IntoRes
         .map_err(|e| e.to_string())
         .unwrap();
 
-    if CompilationRunner::prepare_files(base64_decoded.clone())
+    let workspace = CompilationRunner::prepare_files(&base64_decoded)
         .await
-        .is_err()
-    {
-        return (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            "Failed to upload files".to_string(),
-        );
-    }
+        .unwrap();
 
     let compilation_runner = CompilationRunner::new(
         Compiler::Cairo,
-        query_params.workspace_root_path,
-        query_params.target_compilation_path,
+        workspace.path().join(query_params.workspace_root_path),
+        workspace.path().join(query_params.target_compilation_path),
     );
     let program_hash = compilation_runner.compile().await.unwrap();
     let program_hash_string = hex::encode(program_hash.clone());

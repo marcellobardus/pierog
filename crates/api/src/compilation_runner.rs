@@ -1,5 +1,4 @@
 use cairo::{cairo_compile, compute_hash};
-use db::Db;
 use serde::Deserialize;
 use std::fs;
 use std::fs::File;
@@ -33,7 +32,7 @@ impl CompilationRunner {
         }
     }
 
-    pub async fn prepare_files(zip_data: Vec<u8>) -> Result<bool, String> {
+    pub async fn prepare_files(zip_data: &[u8]) -> Result<TempDir, String> {
         let temp_dir = TempDir::new();
         if temp_dir.is_err() {
             println!("Failed to create temporary directory");
@@ -49,9 +48,6 @@ impl CompilationRunner {
         let mut zip_file = file.unwrap();
         zip_file.write_all(&zip_data).unwrap();
 
-        // Create the archive
-        let mut received_file = NamedTempFile::new().unwrap();
-        received_file.write_all(&zip_data).unwrap();
         let archive = ZipArchive::new(zip_file);
         if let Err(e) = archive {
             println!("Failed to open zip archive: {}", e);
@@ -92,12 +88,7 @@ impl CompilationRunner {
             }
         }
 
-        // TODO: Bart -> return files you need to compile in the format you prefer and pass them over to the `compile` method.
-
-        // TODO: Pia part -> store the zip file in database.
-        let db = Db::new().unwrap();
-        db.set("0xaa", &received_file, "0.13.1").unwrap();
-        Ok(true)
+        Ok(temp_dir)
     }
 
     pub async fn compile(&self) -> Result<Vec<u8>, String> {
