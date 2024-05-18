@@ -36,7 +36,7 @@ impl CompilationRunner {
         workspace_root_path: PathBuf,
         target_compilation_path: PathBuf,
         zip_data: &[u8],
-    ) -> Result<Vec<u8>, String> {
+    ) -> Result<String, String> {
         let temp_dir = TempDir::new();
         if temp_dir.is_err() {
             println!("Failed to create temporary directory");
@@ -102,7 +102,7 @@ impl CompilationRunner {
         Ok(program_hash)
     }
 
-    pub async fn compile(&self) -> Result<Vec<u8>, String> {
+    pub async fn compile(&self) -> Result<String, String> {
         println!("Compiling with {:?} compiler", self.compiler);
 
         let hash = match self.compiler {
@@ -113,6 +113,7 @@ impl CompilationRunner {
                 )
                 .await
                 .unwrap();
+
                 compute_hash(compiled_cairo.path().to_path_buf())
                     .await
                     .unwrap()

@@ -29,7 +29,7 @@ pub async fn cairo_compile(
     Ok(output)
 }
 
-pub async fn compute_hash(compiled_program_path: PathBuf) -> Result<Vec<u8>, std::io::Error> {
+pub async fn compute_hash(compiled_program_path: PathBuf) -> Result<String, std::io::Error> {
     let task = Command::new("cairo-hash-program")
         .arg("--program")
         .arg(compiled_program_path.as_path())
@@ -50,5 +50,5 @@ pub async fn compute_hash(compiled_program_path: PathBuf) -> Result<Vec<u8>, std
 
     println!("program {:?} is compiling... ", cleaned);
 
-    Ok(hex::decode(cleaned).unwrap())
+    Ok(cleaned)
 }
