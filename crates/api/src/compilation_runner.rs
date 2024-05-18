@@ -46,7 +46,7 @@ impl CompilationRunner {
             return Err("Failed to create temporary file".to_string());
         }
         let mut zip_file = file.unwrap();
-        zip_file.write_all(&zip_data).unwrap();
+        zip_file.write_all(zip_data).unwrap();
 
         let archive = ZipArchive::new(zip_file);
         if let Err(e) = archive {
