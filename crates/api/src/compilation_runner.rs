@@ -1,8 +1,10 @@
+use cairo::{cairo_compile, compute_hash};
 use db::Db;
 use serde::Deserialize;
 use std::fs;
 use std::fs::File;
 use std::io::{self, Read, Write};
+use std::path::PathBuf;
 use tempfile::{NamedTempFile, TempDir};
 use zip::ZipArchive;
 
@@ -13,12 +15,22 @@ pub enum Compiler {
 
 #[derive(Debug)]
 pub struct CompilationRunner {
+    workspace_root_path: PathBuf,
+    target_compilation_path: PathBuf,
     compiler: Compiler,
 }
 
 impl CompilationRunner {
-    pub fn new(compiler: Compiler) -> Self {
-        Self { compiler }
+    pub fn new(
+        compiler: Compiler,
+        workspace_root_path: PathBuf,
+        target_compilation_path: PathBuf,
+    ) -> Self {
+        Self {
+            compiler,
+            workspace_root_path,
+            target_compilation_path,
+        }
     }
 
     pub async fn prepare_files(zip_data: Vec<u8>) -> Result<bool, String> {
@@ -91,11 +103,21 @@ impl CompilationRunner {
     pub async fn compile(&self) -> Result<Vec<u8>, String> {
         println!("Compiling with {:?} compiler", self.compiler);
 
-        match self.compiler {
-            Compiler::Cairo => {}
-        }
+        let hash = match self.compiler {
+            Compiler::Cairo => {
+                let compiled_cairo = cairo_compile(
+                    self.workspace_root_path.to_owned(),
+                    self.target_compilation_path.to_owned(),
+                )
+                .await
+                .unwrap();
+                compute_hash(compiled_cairo.path().to_path_buf())
+                    .await
+                    .unwrap()
+            }
+        };
 
-        Ok(vec![])
+        Ok(hash)
     }
 }
 

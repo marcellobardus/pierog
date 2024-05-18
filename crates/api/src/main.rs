@@ -73,7 +73,11 @@ async fn upload_handler(Query(query_params): Query<QueryParams>) -> impl IntoRes
         );
     }
 
-    let compilation_runner = CompilationRunner::new(Compiler::Cairo);
+    let compilation_runner = CompilationRunner::new(
+        Compiler::Cairo,
+        query_params.workspace_root_path,
+        query_params.target_compilation_path,
+    );
     let program_hash = compilation_runner.compile().await.unwrap();
 
     (StatusCode::OK, hex::encode(program_hash))

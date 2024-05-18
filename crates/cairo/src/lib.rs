@@ -7,19 +7,24 @@ use tracing::debug;
 #[cfg(test)]
 pub mod tests;
 
-pub async fn cairo_compile(program_path: PathBuf) -> Result<NamedTempFile, std::io::Error> {
+pub async fn cairo_compile(
+    workspace_root_path: PathBuf,
+    target_compilation_path: PathBuf,
+) -> Result<NamedTempFile, std::io::Error> {
     let output = NamedTempFile::new()?;
 
     let task = Command::new("cairo-compile")
-        .arg(program_path.as_path())
+        .arg(target_compilation_path.as_path())
         .arg("--output")
         .arg(output.path())
+        .arg("--cairo_path")
+        .arg(workspace_root_path.as_path())
         .stdout(Stdio::null())
         .spawn()?;
 
     task.wait_with_output().await?;
 
-    debug!("program {:?} is compiling... ", program_path);
+    debug!("program {:?} is compiling... ", target_compilation_path);
 
     Ok(output)
 }
