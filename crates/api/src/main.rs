@@ -1,17 +1,25 @@
 use std::{env, path::PathBuf};
 
+use axum::{extract::Query, http::StatusCode};
+
 use axum::{
-    extract::Query,
-    http::StatusCode,
+    body::Body,
+    http::{HeaderName, HeaderValue, Response},
     response::IntoResponse,
     routing::{get, post},
-    Router,
+    Json, Router,
 };
 use compilation_runner::{CompilationRunner, Compiler};
 mod compilation_runner;
 use base64::{engine::general_purpose, Engine};
+use db::Db;
 use dotenv::dotenv;
 use serde::Deserialize;
+
+#[derive(Deserialize)]
+struct ProgramHashRequest {
+    program_hash: String,
+}
 
 #[tokio::main]
 async fn main() {
@@ -71,7 +79,42 @@ async fn upload_handler(Query(query_params): Query<QueryParams>) -> impl IntoRes
     (StatusCode::OK, hex::encode(program_hash))
 }
 
-async fn search_handler() -> impl IntoResponse {
+async fn search_handler(
+    program_hash: Json<ProgramHashRequest>,
+) -> Result<impl IntoResponse, StatusCode> {
     // TODO: implement search handler (fetch from db and serve the result).
-    "search_handler"
+    let db = match Db::new() {
+        Ok(db) => db,
+        Err(err) => {
+            tracing::error!("Failed to create database connection: {}", err);
+            return Err(StatusCode::INTERNAL_SERVER_ERROR);
+        }
+    };
+    println!("Searching for program: {}", program_hash.program_hash);
+    match db.get(&program_hash.program_hash) {
+        Ok(db_result) => {
+            println!("Found program: {:?}", db_result.version);
+            let zip_data = db_result.data;
+            let response = Response::builder()
+                .header(
+                    HeaderName::from_static("content-type"),
+                    HeaderValue::from_static("application/zip"),
+                )
+                .header(
+                    HeaderName::from_static("content-disposition"),
+                    HeaderValue::from_str(&format!(
+                        "attachment; filename=\"{}.zip\"",
+                        program_hash.program_hash
+                    ))
+                    .unwrap(),
+                )
+                .body(Body::from(zip_data))
+                .unwrap();
+            Ok(response)
+        }
+        Err(err) => {
+            tracing::error!("Failed to fetch program: {}", err);
+            Err(StatusCode::INTERNAL_SERVER_ERROR)
+        }
+    }
 }

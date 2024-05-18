@@ -38,10 +38,8 @@ impl CompilationRunner {
         zip_file.write_all(&zip_data).unwrap();
 
         // Create the archive
-        let mut zip_contents = Vec::new();
-        zip_file.read_to_end(&mut zip_contents).unwrap();
         let mut received_file = NamedTempFile::new().unwrap();
-        received_file.write_all(&zip_contents).unwrap();
+        received_file.write_all(&zip_data).unwrap();
         let archive = ZipArchive::new(zip_file);
         if let Err(e) = archive {
             println!("Failed to open zip archive: {}", e);
@@ -86,7 +84,7 @@ impl CompilationRunner {
 
         // TODO: Pia part -> store the zip file in database.
         let db = Db::new().unwrap();
-        db.set("0xaa", received_file, "0.13.1").unwrap();
+        db.set("0xaa", &received_file, "0.13.1").unwrap();
         Ok(true)
     }
 
