@@ -1,14 +1,9 @@
+use db::Db;
+use serde::Deserialize;
 use std::fs;
 use std::fs::File;
 use std::io::{self, Read, Write};
-use std::process::{Child, Command, Stdio};
-
-use db::Db;
-use serde::Deserialize;
 use tempfile::{NamedTempFile, TempDir};
-
-use axum::extract::Multipart;
-
 use zip::ZipArchive;
 
 #[derive(Deserialize, Debug)]
@@ -26,7 +21,7 @@ impl CompilationRunner {
         Self { compiler }
     }
 
-    pub async fn prepare_files(mut multipart: Multipart) -> Result<bool, String> {
+    pub async fn prepare_files(zip_data: Vec<u8>) -> Result<bool, String> {
         let temp_dir = TempDir::new();
         if temp_dir.is_err() {
             println!("Failed to create temporary directory");
@@ -34,20 +29,13 @@ impl CompilationRunner {
         }
         let temp_dir = temp_dir.unwrap();
 
-        // Create the ZIP file from the multipart request
-        let field = multipart.next_field().await.unwrap();
-        if field.is_none() {
-            println!("No file found in the request");
-            return Err("No file found in the request".to_string());
-        }
-        let content = field.unwrap().bytes().await.unwrap();
         let file = NamedTempFile::new();
         if file.is_err() {
             println!("Failed to create temporary file");
             return Err("Failed to create temporary file".to_string());
         }
         let mut zip_file = file.unwrap();
-        zip_file.write_all(&content).unwrap();
+        zip_file.write_all(&zip_data).unwrap();
 
         // Create the archive
         let mut zip_contents = Vec::new();
@@ -102,33 +90,14 @@ impl CompilationRunner {
         Ok(true)
     }
 
-    pub async fn compile(&self) -> Result<String, String> {
+    pub async fn compile(&self) -> Result<Vec<u8>, String> {
         println!("Compiling with {:?} compiler", self.compiler);
 
-        let child: Result<Child, std::io::Error>;
         match self.compiler {
-            Compiler::Cairo => {
-                // TODO: Bart part -> invoke cairo_compile
-
-                let args = ["-l"]; // TODO: define *actual* compilation arguments.
-                child = Command::new("ls").args(args).stdout(Stdio::piped()).spawn();
-            }
-        }
-        if child.is_err() {
-            println!("Failed to spawn child process");
-
-            return Err(format!("Failed to compile: {}", child.unwrap_err()));
+            Compiler::Cairo => {}
         }
 
-        match child.unwrap().wait_with_output() {
-            Ok(output) => {
-                let output_str = String::from_utf8_lossy(&output.stdout);
-                println!("Compilation output: {}", output_str);
-
-                Ok(output_str.to_string())
-            }
-            Err(err) => Err(format!("Failed on waiting with output: {}", err)),
-        }
+        Ok(vec![])
     }
 }
 
