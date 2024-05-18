@@ -4,6 +4,7 @@ import argparse
 import os
 import platform
 import base64
+import requests
 
 from typing import List
 
@@ -56,27 +57,29 @@ for file in files_to_zip:
         print("Unsupported OS")
         exit(1)
 
-# Remove some garbage files
-# for file in os.listdir("temp/"):
-#     if not os.path.isdir(f"temp/{file}"):
-#         os.system(f"rm temp/{file}")
-#     result = subprocess.run(
-#         [f"pwd", "cd temp/", f"mv {base_path}* ./"],
-#         stdout=subprocess.PIPE,
-#         stderr=subprocess.PIPE,
-#         text=True,
-#     )
-#     print(result.stdout)
 
 print(files_to_zip)
 os.system(f"zip -r upload.zip temp")
 
 with open("upload.zip", "rb") as sources:
-    base64_encoded = base64.b64encode(sources.read())
-    explicit_path = base_path + args.file.split(".")[0].split("/")[-1] + ".cairo"
-    workspace_root = base_path
+    zip_data = base64.b64encode(sources.read()).decode("utf-8")
+    target_compilation_path = (
+        base_path + args.file.split(".")[0].split("/")[-1] + ".cairo"
+    )
+    workspace_root_path = base_path
 
     print("Sending the following files to the server:")
-    print(explicit_path)
-    print(workspace_root)
-    print(base64_encoded)
+    print(target_compilation_path)
+    print(workspace_root_path)
+    print(zip_data)
+
+    # response = requests.post(
+    #     "http://localhost:8000/upload",
+    #     json={
+    #         "zip_data": zip_data,
+    #         "target_compilation_path": target_compilation_path,
+    #         "workspace_root_path": workspace_root_path,
+    #     },
+    # )
+
+    # print(response.text)
