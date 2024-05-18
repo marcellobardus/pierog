@@ -1,13 +1,12 @@
-use std::fmt::format;
+use std::fs;
 use std::fs::File;
 use std::io::{self, Read, Write};
 use std::process::{Child, Command, Stdio};
-use std::{env, fs};
 
 use serde::Deserialize;
 use tempfile::{NamedTempFile, TempDir};
 
-use axum::extract::{Multipart, Path};
+use axum::extract::Multipart;
 use zip::ZipArchive;
 
 #[derive(Deserialize, Debug)]
@@ -25,7 +24,7 @@ impl CompilationRunner {
         Self { compiler }
     }
 
-    pub async fn upload_files(mut multipart: Multipart) -> Result<bool, String> {
+    pub async fn prepare_files(mut multipart: Multipart) -> Result<bool, String> {
         let temp_dir = TempDir::new();
         if temp_dir.is_err() {
             println!("Failed to create temporary directory");
@@ -90,9 +89,9 @@ impl CompilationRunner {
             }
         }
 
-        // TODO: Pia part -> store the zip file in database.
-
         // TODO: Bart -> return files you need to compile in the format you prefer and pass them over to the `compile` method.
+
+        // TODO: Pia part -> store the zip file in database.
 
         Ok(true)
     }

@@ -35,7 +35,7 @@ async fn main() {
 }
 
 async fn upload_handler(files: Multipart) -> impl IntoResponse {
-    if CompilationRunner::upload_files(files).await.is_err() {
+    if CompilationRunner::prepare_files(files).await.is_err() {
         return (
             StatusCode::INTERNAL_SERVER_ERROR,
             "Failed to upload files".to_string(),

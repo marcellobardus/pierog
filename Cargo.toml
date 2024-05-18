@@ -1,9 +1,14 @@
 [workspace]
-members = ["crates/cli", "crates/api"]
+members = ["crates/cairo", "crates/cli", "crates/api", "crates/db"]
 
 [workspace.dependencies]
+workspace.resolver = "2"
+
 tokio = { version = "1.37.0", features = ["full"] }
 serde = { version = "1.0.202", features = ["derive"] }
 tracing = "0.1.40"
 tracing-subscriber = "0.3.18"
-workspace.resolver = "2"
+rusqlite = { version = "0.31.0", features = ["bundled"] }
+anyhow = "1.0"
+tempfile = "3.10.1"
+hex = "0.4.3"
