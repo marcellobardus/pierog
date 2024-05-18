@@ -1,17 +1,12 @@
 use anyhow::{bail, Result};
 use rusqlite::Connection;
-use std::{
-    fs::File,
-    io::{Read, Write},
-};
-use tempfile::NamedTempFile;
 
 pub struct Db {
     conn: Connection,
 }
 
 pub struct DbResult {
-    pub data: File,
+    pub data: Vec<u8>,
     pub version: String,
 }
 
@@ -21,7 +16,7 @@ impl Db {
         conn.execute(
             "CREATE TABLE IF NOT EXISTS cairo_maps (
                 hash TEXT PRIMARY KEY,
-                data TEXT,
+                data BLOB,
                 version TEXT
             )",
             [],
@@ -33,29 +28,20 @@ impl Db {
         let mut stmt = self
             .conn
             .prepare("SELECT data, version FROM cairo_maps WHERE hash = ?")?;
-        let mut rows = stmt.query([key])?;
+        let mut rows = stmt.query(rusqlite::params![key])?;
         if let Some(row) = rows.next()? {
-            let data: String = row.get(0)?;
+            let data: Vec<u8> = row.get(0)?;
             let version: String = row.get(1)?;
-            let mut file = tempfile::NamedTempFile::new()?;
-            file.write_all(data.as_bytes())?;
-            Ok(DbResult {
-                data: file.reopen()?,
-                version,
-            })
+            Ok(DbResult { data, version })
         } else {
             bail!("Program not found")
         }
     }
 
-    pub fn set(&self, key: &str, data: NamedTempFile, version: &str) -> Result<()> {
-        // turn NamedTempFile into File
-        let mut file_data = data.reopen()?;
-        let mut buf = String::new();
-        file_data.read_to_string(&mut buf)?;
+    pub fn set(&self, key: &str, data: &[u8], version: &str) -> Result<()> {
         self.conn.execute(
             "INSERT OR REPLACE INTO cairo_maps (hash, data, version) VALUES (?, ?, ?)",
-            [key, &buf, version],
+            rusqlite::params![key, data, version],
         )?;
         Ok(())
     }
@@ -64,27 +50,22 @@ impl Db {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::io::Read;
+    use std::{fs::File, io::Read};
 
     #[test]
     fn test_db() {
         let db = Db::new().unwrap();
         // get the file from path test.cairo
         let mut file = File::open("test.cairo").unwrap();
-        // turn file to NamedTempFile
+        // read file contents into a buffer
         let mut buf = Vec::new();
         file.read_to_end(&mut buf).unwrap();
-        let mut temp_file = tempfile::NamedTempFile::new().unwrap();
-        temp_file.write_all(&buf).unwrap();
-        db.set("0xaa", temp_file, "0.13.1").unwrap();
+        db.set("0xaa", &buf, "0.13.1").unwrap();
+
         let db_result = db.get("0xaa").unwrap();
-        let mut retrieved_file = db_result.data;
-        let mut buf = String::new();
-        retrieved_file.read_to_string(&mut buf).unwrap();
-        // turn this into file object
-        let mut temp_file = tempfile::NamedTempFile::new().unwrap();
-        temp_file.write_all(buf.as_bytes()).unwrap();
+        let retrieved_data = db_result.data;
+
         // print the file content
-        println!("{}", buf);
+        println!("File content: {:?}", retrieved_data);
     }
 }

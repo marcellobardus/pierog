@@ -12,4 +12,7 @@ rusqlite = { version = "0.31.0", features = ["bundled"] }
 anyhow = "1.0"
 tempfile = "3.10.1"
 hex = "0.4.3"
+base64 = "0.22.1"
 db = { path = "crates/db" }
+
+cairo = { path = "./crates/cairo" }

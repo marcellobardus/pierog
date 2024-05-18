@@ -4,11 +4,16 @@ use crate::{cairo_compile, compute_hash};
 
 #[tokio::test]
 async fn get_hash_test() {
-    let cairo_file_path =
+    let workspace_root_path =
         PathBuf::from(env::var("CARGO_MANIFEST_DIR").expect("CARGO_MANIFEST_DIR env not present"))
-            .join("src/tests/simple.cairo");
+            .join("src/tests");
 
-    let compiled_cairo = cairo_compile(cairo_file_path).await.unwrap();
+    let compiled_cairo = cairo_compile(
+        workspace_root_path.clone(),
+        workspace_root_path.join("simple.cairo"),
+    )
+    .await
+    .unwrap();
     let hash = compute_hash(compiled_cairo.path().to_path_buf())
         .await
         .unwrap();
