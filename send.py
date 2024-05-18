@@ -1,7 +1,7 @@
 import requests
 
 # Define the URL
-url = 'http://localhost:3000/upload'
+url = 'http://localhost:4000/upload'
 
 # Define the query parameters
 params = {
