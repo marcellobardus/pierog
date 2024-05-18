@@ -1,18 +1,16 @@
+import axios from 'axios';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   const { q } = req.query;
 
-  // Mock data for demonstration purposes
-  const mockData = [
-    '0x123'
-  ];
+  const response = await axios.get(`http://localhost:4000/search?program_hash=${q}`);
 
-  const results = mockData.filter((item) =>
-    item.toLowerCase().includes((q as string).toLowerCase())
-  );
+  if (!response || response.status === 404) {
+    return res.status(200).json({ results: [] });
+  }
 
-  res.status(200).json({ results });
+  res.status(200).json({ results: [q] });
 };
 
 export default handler;

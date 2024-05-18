@@ -3,7 +3,7 @@ use axum::{
     http::{HeaderName, HeaderValue, Response},
     response::IntoResponse,
     routing::{get, post},
-    Json, Router,
+    Router,
 };
 use axum::{extract::Query, http::StatusCode};
 use compilation_runner::{CompilationRunner, Compiler};
@@ -30,9 +30,10 @@ async fn main() {
             "/upload",
             post(upload_handler).layer(axum::extract::DefaultBodyLimit::disable()),
         )
-        .route("/search", get(search_handler));
+        .route("/search", get(search_handler))
+        .route("/download", get(download_handler));
 
-    let port = env::var("PORT").unwrap_or("3000".to_string());
+    let port = env::var("PORT").unwrap_or("4000".to_string());
     let listener = tokio::net::TcpListener::bind(format!("{}:{}", "0.0.0.0", port))
         .await
         .unwrap();
@@ -80,9 +81,28 @@ async fn upload_handler(Query(query_params): Query<QueryParams>) -> impl IntoRes
 }
 
 async fn search_handler(
-    program_hash: Json<ProgramHashRequest>,
+    program_hash: Query<ProgramHashRequest>,
 ) -> Result<impl IntoResponse, StatusCode> {
-    // TODO: implement search handler (fetch from db and serve the result).
+    let db = match Db::new() {
+        Ok(db) => db,
+        Err(err) => {
+            tracing::error!("Failed to create database connection: {}", err);
+            return Err(StatusCode::INTERNAL_SERVER_ERROR);
+        }
+    };
+    println!("Searching for program: {}", program_hash.program_hash);
+    match db.get(&program_hash.program_hash) {
+        Ok(db_result) => {
+            println!("Found program: {:?}", db_result.version);
+            Ok("Program found".to_string())
+        }
+        Err(_err) => Err(StatusCode::NOT_FOUND),
+    }
+}
+
+async fn download_handler(
+    program_hash: Query<ProgramHashRequest>,
+) -> Result<impl IntoResponse, StatusCode> {
     let db = match Db::new() {
         Ok(db) => db,
         Err(err) => {

@@ -16,7 +16,7 @@ const Search = () => {
       const fetchResults = async () => {
         try {
           const response = await axios.get(`/api/search?q=${q}`);
-          console.log(response);
+
           setResults(response.data.results);
         } catch (error) {
           console.error('Error fetching search results:', error);
@@ -28,7 +28,6 @@ const Search = () => {
 
   const isMatch = results.length > 0;
 
-  // TODO: add a "Download" button and metadata when there is a hit.
   return (
       <GradientBackground>
         <div className="search-results">
