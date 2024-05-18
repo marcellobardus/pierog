@@ -82,6 +82,7 @@ os.system(f"zip -r upload.zip temp")
 
 with open("upload.zip", "rb") as sources:
     zip_data = base64.b64encode(sources.read()).decode("utf-8")
+    base_path = "temp/" + base_path
     target_compilation_path = (
         base_path + args.file.split(".")[0].split("/")[-1] + ".cairo"
     )
