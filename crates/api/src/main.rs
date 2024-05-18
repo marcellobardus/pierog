@@ -92,7 +92,10 @@ async fn search_handler(
     match db.get(&program_hash.program_hash) {
         Ok(db_result) => {
             println!("Found program: {:?}", db_result.version);
-            Ok("Program found".to_string())
+            Ok(format!(
+                "{{\"cairo-compile version\": \"{}\"}}",
+                db_result.version
+            ))
         }
         Err(_err) => Err(StatusCode::NOT_FOUND),
     }
