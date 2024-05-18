@@ -2,6 +2,7 @@
 members = [
     "crates/cli",
     "crates/server",
+    "crates/db"
 ]
 
 [workspace.dependencies]
@@ -10,3 +11,6 @@ axum = "0.7.5"
 serde = { version = "1.0.202", features = ["derive"] }
 tracing = "0.1.40"
 tracing-subscriber = "0.3.18"
+rusqlite = { version = "0.31.0", features = ["bundled"] }
+anyhow = "1.0"
+tempfile = "3"
