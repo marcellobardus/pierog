@@ -2,6 +2,8 @@
 
 import argparse
 import os
+import subprocess
+import platform
 
 from typing import List
 
@@ -45,7 +47,28 @@ if os.path.exists("temp/"):
     os.system("rm -rf temp")
 os.system("mkdir temp")
 for file in files_to_zip:
-    os.system(f"cp {file} temp/")
+    os_system = platform.system()
+    if os_system == "Darwin":
+        os.system(f"rsync -R {file} temp/")
+    elif os_system == "Linux":
+        os.system(f"cp --parents {file} temp/")
+    else:
+        print("Unsupported OS")
+        exit(1)
+
+# Remove some garbage files
+# for file in os.listdir("temp/"):
+#     if not os.path.isdir(f"temp/{file}"):
+#         os.system(f"rm temp/{file}")
+#     result = subprocess.run(
+#         [f"pwd", "cd temp/", f"mv {base_path}* ./"],
+#         stdout=subprocess.PIPE,
+#         stderr=subprocess.PIPE,
+#         text=True,
+#     )
+#     print(result.stdout)
+
+
 os.system(f"zip -r upload.zip temp")
 
 
