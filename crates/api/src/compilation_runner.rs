@@ -32,7 +32,11 @@ impl CompilationRunner {
         }
     }
 
-    pub async fn prepare_files(zip_data: &[u8]) -> Result<TempDir, String> {
+    pub async fn run(
+        workspace_root_path: PathBuf,
+        target_compilation_path: PathBuf,
+        zip_data: &[u8],
+    ) -> Result<Vec<u8>, String> {
         let temp_dir = TempDir::new();
         if temp_dir.is_err() {
             println!("Failed to create temporary directory");
@@ -88,7 +92,14 @@ impl CompilationRunner {
             }
         }
 
-        Ok(temp_dir)
+        let compilation_runner = CompilationRunner::new(
+            Compiler::Cairo,
+            temp_dir.path().join(workspace_root_path),
+            temp_dir.path().join(target_compilation_path),
+        );
+        let program_hash = compilation_runner.compile().await.unwrap();
+
+        Ok(program_hash)
     }
 
     pub async fn compile(&self) -> Result<Vec<u8>, String> {

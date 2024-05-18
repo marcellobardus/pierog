@@ -48,7 +48,7 @@ pub async fn compute_hash(compiled_program_path: PathBuf) -> Result<Vec<u8>, std
         .filter(|c| !c.is_whitespace())
         .collect();
 
-    debug!("program {:?} is compiling... ", cleaned);
+    println!("program {:?} is compiling... ", cleaned);
 
     Ok(hex::decode(cleaned).unwrap())
 }
