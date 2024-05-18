@@ -6,7 +6,7 @@ use axum::{
     Json, Router,
 };
 use axum::{extract::Query, http::StatusCode};
-use compilation_runner::{CompilationRunner, Compiler};
+use compilation_runner::CompilationRunner;
 use std::{env, path::PathBuf};
 mod compilation_runner;
 use base64::{engine::general_purpose, Engine};
@@ -61,22 +61,20 @@ async fn upload_handler(Query(query_params): Query<QueryParams>) -> impl IntoRes
         .map_err(|e| e.to_string())
         .unwrap();
 
-    let workspace = CompilationRunner::prepare_files(&base64_decoded)
-        .await
-        .unwrap();
+    let program_hash = CompilationRunner::run(
+        query_params.workspace_root_path,
+        query_params.target_compilation_path,
+        &base64_decoded,
+    )
+    .await
+    .unwrap();
 
-    let compilation_runner = CompilationRunner::new(
-        Compiler::Cairo,
-        workspace.path().join(query_params.workspace_root_path),
-        workspace.path().join(query_params.target_compilation_path),
-    );
-    let program_hash = compilation_runner.compile().await.unwrap();
-    let program_hash_string = hex::encode(program_hash.clone());
+    let program_hash_string = hex::encode(program_hash);
     let db = Db::new().unwrap();
     db.set(&program_hash_string, &base64_decoded, "0.13.1")
         .unwrap();
 
-    (StatusCode::OK, hex::encode(program_hash))
+    (StatusCode::OK, program_hash_string)
 }
 
 async fn search_handler(
