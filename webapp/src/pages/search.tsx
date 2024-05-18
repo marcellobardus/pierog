@@ -1,5 +1,5 @@
 import { useRouter } from 'next/router';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import axios from 'axios';
 
 import { GradientBackground } from '.';
@@ -28,13 +28,19 @@ const Search = () => {
 
   const isMatch = results.length > 0;
 
+  const downloadFile = useCallback(() => {
+    const link = document.createElement('a');
+    link.href =`http://localhost:4000/download?program_hash=${q}`;
+    link.click();
+  }, [q]);
+
   return (
       <GradientBackground>
         <div className="search-results">
         {isMatch ? (
           <>
             <h2>Program hash found!</h2>
-          <CustomButton style={{ top: 0 }}>Download Sources</CustomButton>
+          <CustomButton onClick={downloadFile}>Download Sources</CustomButton>
           </>
       ) : (
         <div>
