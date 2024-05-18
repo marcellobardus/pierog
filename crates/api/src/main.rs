@@ -78,7 +78,7 @@ async fn upload_handler(Query(query_params): Query<QueryParams>) -> impl IntoRes
 }
 
 async fn search_handler(
-    program_hash: Json<ProgramHashRequest>,
+    program_hash: Query<ProgramHashRequest>,
 ) -> Result<impl IntoResponse, StatusCode> {
     // TODO: implement search handler (fetch from db and serve the result).
     let db = match Db::new() {
