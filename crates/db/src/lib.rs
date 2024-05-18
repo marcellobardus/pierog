@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{bail, Result};
 use rusqlite::Connection;
 use std::{
     fs::File,
@@ -9,40 +9,50 @@ pub struct Db {
     conn: Connection,
 }
 
+pub struct DbResult {
+    pub data: File,
+    pub version: String,
+}
+
 impl Db {
     pub fn new() -> Result<Self> {
         let conn = Connection::open("pierog.db")?;
         conn.execute(
             "CREATE TABLE IF NOT EXISTS cairo_maps (
                 hash TEXT PRIMARY KEY,
-                data TEXT
+                data TEXT,
+                version TEXT
             )",
             [],
         )?;
         Ok(Db { conn })
     }
 
-    pub fn get(&self, key: &str) -> Result<Option<File>> {
+    pub fn get(&self, key: &str) -> Result<DbResult> {
         let mut stmt = self
             .conn
-            .prepare("SELECT data FROM cairo_maps WHERE hash = ?")?;
+            .prepare("SELECT data, version FROM cairo_maps WHERE hash = ?")?;
         let mut rows = stmt.query([key])?;
         if let Some(row) = rows.next()? {
             let data: String = row.get(0)?;
+            let version: String = row.get(1)?;
             let mut file = tempfile::NamedTempFile::new()?;
             file.write_all(data.as_bytes())?;
-            Ok(Some(file.reopen()?))
+            Ok(DbResult {
+                data: file.reopen()?,
+                version,
+            })
         } else {
-            Ok(None)
+            bail!("Program not found")
         }
     }
 
-    pub fn set(&self, key: &str, mut value: File) -> Result<()> {
+    pub fn set(&self, key: &str, mut data: File, version: &str) -> Result<()> {
         let mut buf = String::new();
-        value.read_to_string(&mut buf)?;
+        data.read_to_string(&mut buf)?;
         self.conn.execute(
-            "INSERT OR REPLACE INTO cairo_maps (hash, data) VALUES (?, ?)",
-            &[key, &buf],
+            "INSERT OR REPLACE INTO cairo_maps (hash, data, version) VALUES (?, ?, ?)",
+            [key, &buf, version],
         )?;
         Ok(())
     }
@@ -58,14 +68,15 @@ mod tests {
         let db = Db::new().unwrap();
         // get the file from path test.cairo
         let file = File::open("test.cairo").unwrap();
-
-        db.set("0xaa", file).unwrap();
-        let mut retrieved_file = db.get("0xaa").unwrap().unwrap();
-
+        db.set("0xaa", file, "0.13.1").unwrap();
+        let db_result = db.get("0xaa").unwrap();
+        let mut retrieved_file = db_result.data;
         let mut buf = String::new();
         retrieved_file.read_to_string(&mut buf).unwrap();
-
         // turn this into file object
-        print!("{}", buf);
+        let mut temp_file = tempfile::NamedTempFile::new().unwrap();
+        temp_file.write_all(buf.as_bytes()).unwrap();
+        // print the file content
+        println!("{}", buf);
     }
 }
