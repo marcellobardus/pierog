@@ -32,9 +32,6 @@ impl CompilationRunner {
         }
         let temp_dir = temp_dir.unwrap();
 
-        // print temp dir
-        println!("Temp dir: {:?}", temp_dir.path());
-
         // Create the ZIP file from the multipart request
         let field = multipart.next_field().await.unwrap();
         if field.is_none() {
@@ -71,7 +68,6 @@ impl CompilationRunner {
             println!("Extracted file: {}", file.name());
 
             let outpath = temp_dir.path().join(file.name());
-            println!("Outpath: {:?}", outpath);
 
             // Create the directory structure for the file
             if let Some(p) = outpath.parent() {

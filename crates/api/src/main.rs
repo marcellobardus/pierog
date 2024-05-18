@@ -1,7 +1,7 @@
-use std::env;
+use std::{env, path::PathBuf};
 
 use axum::{
-    extract::Multipart,
+    extract::{Multipart, Query},
     http::StatusCode,
     response::IntoResponse,
     routing::{get, post},
@@ -10,6 +10,7 @@ use axum::{
 use compilation_runner::{CompilationRunner, Compiler};
 mod compilation_runner;
 use dotenv::dotenv;
+use serde::Deserialize;
 
 #[tokio::main]
 async fn main() {
@@ -34,7 +35,22 @@ async fn main() {
     axum::serve(listener, app).await.unwrap();
 }
 
-async fn upload_handler(files: Multipart) -> impl IntoResponse {
+#[derive(Deserialize, Debug)]
+struct QueryParams {
+    workspace_root_path: PathBuf,
+    target_compilation_path: PathBuf,
+}
+
+async fn upload_handler(
+    Query(query_params): Query<QueryParams>,
+    files: Multipart,
+) -> impl IntoResponse {
+    // Print query params
+    println!(
+        "Workspace root path: {:?} | Target path: {:?}",
+        query_params.workspace_root_path, query_params.target_compilation_path
+    );
+
     if CompilationRunner::prepare_files(files).await.is_err() {
         return (
             StatusCode::INTERNAL_SERVER_ERROR,

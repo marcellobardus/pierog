@@ -1,4 +1,4 @@
-use std::{env, io::Read, path::PathBuf};
+use std::{env, path::PathBuf};
 
 use crate::{cairo_compile, compute_hash};
 
