@@ -3,10 +3,12 @@ use std::fs::File;
 use std::io::{self, Read, Write};
 use std::process::{Child, Command, Stdio};
 
+use db::Db;
 use serde::Deserialize;
 use tempfile::{NamedTempFile, TempDir};
 
 use axum::extract::Multipart;
+
 use zip::ZipArchive;
 
 #[derive(Deserialize, Debug)]
@@ -48,13 +50,18 @@ impl CompilationRunner {
         zip_file.write_all(&content).unwrap();
 
         // Create the archive
+        let mut zip_contents = Vec::new();
+        zip_file.read_to_end(&mut zip_contents).unwrap();
+        let mut received_file = NamedTempFile::new().unwrap();
+        received_file.write_all(&zip_contents).unwrap();
         let archive = ZipArchive::new(zip_file);
-        if archive.is_err() {
-            println!("Failed to open zip archive");
-            return Err("Failed to open zip archive".to_string());
+        if let Err(e) = archive {
+            println!("Failed to open zip archive: {}", e);
+            return Err(format!("Failed to open zip archive: {}", e));
         }
         let mut archive = archive.unwrap();
 
+        let temp_dir_path = temp_dir.path();
         // Iterate over each file in the zip archive
         for i in 0..archive.len() {
             let file = archive.by_index(i);
@@ -67,7 +74,8 @@ impl CompilationRunner {
 
             println!("Extracted file: {}", file.name());
 
-            let outpath = temp_dir.path().join(file.name());
+            let outpath = temp_dir_path.join(file.name());
+            println!("Outpath: {:?}", outpath);
 
             // Create the directory structure for the file
             if let Some(p) = outpath.parent() {
@@ -82,13 +90,15 @@ impl CompilationRunner {
                 let mut buf = String::new();
                 let mut file = File::open(&outpath).unwrap();
                 file.read_to_string(&mut buf).unwrap();
+                println!("File content: {}", buf);
             }
         }
 
         // TODO: Bart -> return files you need to compile in the format you prefer and pass them over to the `compile` method.
 
         // TODO: Pia part -> store the zip file in database.
-
+        let db = Db::new().unwrap();
+        db.set("0xaa", received_file, "0.13.1").unwrap();
         Ok(true)
     }
 

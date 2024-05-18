@@ -4,6 +4,7 @@ use std::{
     fs::File,
     io::{Read, Write},
 };
+use tempfile::NamedTempFile;
 
 pub struct Db {
     conn: Connection,
@@ -47,9 +48,11 @@ impl Db {
         }
     }
 
-    pub fn set(&self, key: &str, mut data: File, version: &str) -> Result<()> {
+    pub fn set(&self, key: &str, data: NamedTempFile, version: &str) -> Result<()> {
+        // turn NamedTempFile into File
+        let mut file_data = data.reopen()?;
         let mut buf = String::new();
-        data.read_to_string(&mut buf)?;
+        file_data.read_to_string(&mut buf)?;
         self.conn.execute(
             "INSERT OR REPLACE INTO cairo_maps (hash, data, version) VALUES (?, ?, ?)",
             [key, &buf, version],
@@ -67,8 +70,13 @@ mod tests {
     fn test_db() {
         let db = Db::new().unwrap();
         // get the file from path test.cairo
-        let file = File::open("test.cairo").unwrap();
-        db.set("0xaa", file, "0.13.1").unwrap();
+        let mut file = File::open("test.cairo").unwrap();
+        // turn file to NamedTempFile
+        let mut buf = Vec::new();
+        file.read_to_end(&mut buf).unwrap();
+        let mut temp_file = tempfile::NamedTempFile::new().unwrap();
+        temp_file.write_all(&buf).unwrap();
+        db.set("0xaa", temp_file, "0.13.1").unwrap();
         let db_result = db.get("0xaa").unwrap();
         let mut retrieved_file = db_result.data;
         let mut buf = String::new();
