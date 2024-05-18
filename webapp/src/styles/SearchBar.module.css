@@ -1,0 +1,16 @@
+.search-bar {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+  
+.search-input {
+  padding: 10px;
+  font-size: 16px;
+}
+
+.search-button {
+  padding: 10px;
+  font-size: 16px;
+  margin-left: 10px;
+}
