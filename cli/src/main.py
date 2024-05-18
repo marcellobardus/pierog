@@ -2,8 +2,8 @@
 
 import argparse
 import os
-import subprocess
 import platform
+import base64
 
 from typing import List
 
@@ -68,8 +68,15 @@ for file in files_to_zip:
 #     )
 #     print(result.stdout)
 
-
+print(files_to_zip)
 os.system(f"zip -r upload.zip temp")
 
+with open("upload.zip", "rb") as sources:
+    base64_encoded = base64.b64encode(sources.read())
+    explicit_path = base_path + args.file.split(".")[0].split("/")[-1] + ".cairo"
+    workspace_root = base_path
 
-print(files_to_zip)
+    print("Sending the following files to the server:")
+    print(explicit_path)
+    print(workspace_root)
+    print(base64_encoded)
