@@ -5,10 +5,29 @@ import os
 import platform
 import base64
 import requests
+import json
 
 from typing import List
 
-from src.deps_assemblers.cairo import find_cairo_dependencies
+# from src.deps_assemblers.cairo import find_cairo_dependencies
+
+
+# src.deps_assemblers.cairo
+def find_cairo_dependencies(content: str) -> list[str]:
+    compilation_dependencies = []
+
+    # Split the content by lines
+    lines = content.split("\n")
+    # Filter the lines that contain import statements
+    for line in lines:
+        if line.startswith("from"):
+            # Split by blank space
+            parts = line.split(" ")
+            if not parts[1].startswith("starkware"):
+                path = parts[1].replace(".", "/")
+                compilation_dependencies.append(path + ".cairo")
+    return compilation_dependencies
+
 
 parser = argparse.ArgumentParser(
     prog="Pierog",
@@ -73,13 +92,13 @@ with open("upload.zip", "rb") as sources:
     print(workspace_root_path)
     print(zip_data)
 
-    # response = requests.post(
-    #     "http://localhost:8000/upload",
-    #     json={
-    #         "zip_data": zip_data,
-    #         "target_compilation_path": target_compilation_path,
-    #         "workspace_root_path": workspace_root_path,
-    #     },
-    # )
+    response = requests.post(
+        "https://c86f-89-25-219-226.ngrok-free.app/upload",
+        params={
+            "zip_data": zip_data,
+            "target_compilation_path": target_compilation_path,
+            "workspace_root_path": workspace_root_path,
+        },
+    )
 
-    # print(response.text)
+    print(response.text)
