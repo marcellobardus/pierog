@@ -41,8 +41,8 @@ for dep in compilation_dependencies:
     files_to_zip.append(dep_path)
 
 # Create a directory with the main file and all its dependencies
-if os.path.exists("temp"):
-    os.system("rm -rf temp/*")
+if os.path.exists("temp/"):
+    os.system("rm -rf temp")
 os.system("mkdir temp")
 for file in files_to_zip:
     os.system(f"cp {file} temp/")

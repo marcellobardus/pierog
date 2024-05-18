@@ -8,6 +8,7 @@ def find_cairo_dependencies(content: str) -> list[str]:
         if line.startswith("from"):
             # Split by blank space
             parts = line.split(" ")
-            if parts[1] != "starkware":
-                compilation_dependencies.append(parts[1] + ".cairo")
+            if not parts[1].startswith("starkware"):
+                path = parts[1].replace(".", "/")
+                compilation_dependencies.append(path + ".cairo")
     return compilation_dependencies
