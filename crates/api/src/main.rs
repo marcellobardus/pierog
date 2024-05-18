@@ -1,8 +1,3 @@
-use std::io::Write;
-use std::{env, path::PathBuf};
-
-use axum::{extract::Query, http::StatusCode};
-
 use axum::{
     body::Body,
     http::{HeaderName, HeaderValue, Response},
@@ -10,13 +5,14 @@ use axum::{
     routing::{get, post},
     Json, Router,
 };
+use axum::{extract::Query, http::StatusCode};
 use compilation_runner::{CompilationRunner, Compiler};
+use std::{env, path::PathBuf};
 mod compilation_runner;
 use base64::{engine::general_purpose, Engine};
 use db::Db;
 use dotenv::dotenv;
 use serde::Deserialize;
-use tempfile::NamedTempFile;
 
 #[derive(Deserialize)]
 struct ProgramHashRequest {
@@ -77,9 +73,7 @@ async fn upload_handler(Query(query_params): Query<QueryParams>) -> impl IntoRes
     let program_hash = compilation_runner.compile().await.unwrap();
     let program_hash_string = hex::encode(program_hash.clone());
     let db = Db::new().unwrap();
-    let mut received_file = NamedTempFile::new().unwrap();
-    received_file.write_all(&base64_decoded).unwrap();
-    db.set(&program_hash_string, &received_file, "0.13.1")
+    db.set(&program_hash_string, &base64_decoded, "0.13.1")
         .unwrap();
 
     (StatusCode::OK, hex::encode(program_hash))

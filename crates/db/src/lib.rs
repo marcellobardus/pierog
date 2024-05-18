@@ -1,7 +1,5 @@
 use anyhow::{bail, Result};
 use rusqlite::Connection;
-use std::io::Read;
-use tempfile::NamedTempFile;
 
 pub struct Db {
     conn: Connection,
@@ -40,13 +38,10 @@ impl Db {
         }
     }
 
-    pub fn set(&self, key: &str, data: &NamedTempFile, version: &str) -> Result<()> {
-        let mut file = data.reopen()?;
-        let mut buf = Vec::new();
-        file.read_to_end(&mut buf)?;
+    pub fn set(&self, key: &str, data: &[u8], version: &str) -> Result<()> {
         self.conn.execute(
             "INSERT OR REPLACE INTO cairo_maps (hash, data, version) VALUES (?, ?, ?)",
-            rusqlite::params![key, buf, version],
+            rusqlite::params![key, data, version],
         )?;
         Ok(())
     }
@@ -55,10 +50,7 @@ impl Db {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::{
-        fs::File,
-        io::{Read, Write},
-    };
+    use std::{fs::File, io::Read};
 
     #[test]
     fn test_db() {
@@ -68,10 +60,7 @@ mod tests {
         // read file contents into a buffer
         let mut buf = Vec::new();
         file.read_to_end(&mut buf).unwrap();
-        // create a NamedTempFile from the buffer
-        let mut temp_file = NamedTempFile::new().unwrap();
-        temp_file.write_all(&buf).unwrap();
-        db.set("0xaa", &temp_file, "0.13.1").unwrap();
+        db.set("0xaa", &buf, "0.13.1").unwrap();
 
         let db_result = db.get("0xaa").unwrap();
         let retrieved_data = db_result.data;
