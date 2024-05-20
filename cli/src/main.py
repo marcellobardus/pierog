@@ -94,7 +94,7 @@ with open("upload.zip", "rb") as sources:
     print(zip_data)
 
     response = requests.post(
-        "https://c86f-89-25-219-226.ngrok-free.app/upload",
+        "http://127.0.0.1:4000/upload",
         params={
             "zip_data": zip_data,
             "target_compilation_path": target_compilation_path,
